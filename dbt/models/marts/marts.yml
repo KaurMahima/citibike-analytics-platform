@@ -1,0 +1,14 @@
+version: 2 
+
+models:
+  - name: fct_trips
+    descriptione: Trip-level fact table for citi bike rides.
+    columns:
+      - name: ride_id
+        tests:
+          - not_null
+          - unique 
+
+      - name : trip_date
+        tests:
+          - not_null 

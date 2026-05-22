@@ -1,0 +1,8 @@
+version: 2 
+
+sources:
+  - name: citibike_raw
+    tables:
+      - name: trips
+        config:
+          external_location: "read_parquet('../data/bronze/year=*/month=*/trips.parquet')"
