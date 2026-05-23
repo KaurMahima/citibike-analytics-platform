@@ -8,6 +8,7 @@ dependencies:
   - pyarrow>=16
   - requests>=2.32
   - duckdb>=1.0
+  - pyyaml>=6.0
   - pip
   - pip:
       - dagster>=1.7.0

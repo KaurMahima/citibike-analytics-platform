@@ -1,10 +1,9 @@
-import argparse
 import logging 
 import os 
 from pathlib import Path
-import duckdb 
 import pandas as pd 
 import requests 
+import yaml
 
 
 logging.basicConfig(
@@ -12,10 +11,15 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
-noaa_base_url = "https://www.ncdc.noaa.gov/cdo-web/api/v2/data"
-dataset_id = "GHCND"
+with open("config/pipeline_config.yml", "r", encoding="utf-8") as file:
+       config = yaml.safe_load(file)
 
-station_id = 'GHCND:USW00094728'
+base_url = config["noaa_weather"]["base_url"]
+start_date = config["date_range"]["start_date"]
+end_date = config["date_range"]["end_date"]
+dataset_id = config["weather"]["dataset_id"]
+station_id = config["weather"]["station_id"]
+weather_bronze_dir = Path(config["paths"]["weather_bronze_dir"])
 
 def fetch_noaa_weather(start_date: str, end_date: str) -> list[dict]:
         token = os.getenv("NOAA_API_TOKEN")
@@ -23,22 +27,36 @@ def fetch_noaa_weather(start_date: str, end_date: str) -> list[dict]:
                raise ValueError("NOAA_API_TOKEN environment variable is not set")
 
         headers = {"token": token}
-        params = {
-                "datasetid": dataset_id,
-                "stationid": station_id,
-                "startdate": start_date,
-                "enddate": end_date,
-                "units": "metric",
-                "limit": 1000,
-                 "datatypeid": ["TMAX", "TMIN", "PRCP", "SNOW", "AWND"],
-        }
+        all_results = []
+        limit = 1000
+        offset = 1
 
-        logging.info("Fetching NOAA weather data for %s to %s", start_date, end_date)
+        while True:
+                params = {
+                        "datasetid": dataset_id,
+                        "stationid": station_id,
+                        "startdate": start_date,
+                        "enddate": end_date,
+                        "units": "metric",
+                        "limit": limit,
+                        "offset": offset,
+                        "datatypeid": ["TMAX", "TMIN", "PRCP", "SNOW", "AWND"],
+                }
 
-        response = requests.get(noaa_base_url, headers= headers, params=params, timeout=60)
-        response.raise_for_status()
-        payload = response.json()
-        return payload.get("results", [])
+                logging.info("Fetching NOAA weather data with offset %s", offset)
+
+                response = requests.get(base_url, headers= headers, params=params, timeout=60)
+                response.raise_for_status()
+                results = response.json().get("results", [])
+                if not results:
+                       break
+                all_results.extend(results)
+                if len(results) < limit:
+                       break
+
+                offset += limit
+
+        return all_results
 
 def transform_weather_data(results: list[dict]) -> pd.DataFrame:
         if not results:
@@ -47,7 +65,7 @@ def transform_weather_data(results: list[dict]) -> pd.DataFrame:
         df = pd.DataFrame(results)
         df['date'] = pd.to_datetime(df['date']).dt.date
 
-        pivot_df = (
+        weather_df = (
                 df.pivot_table(
                         index="date",
                         columns="datatype",
@@ -67,37 +85,31 @@ def transform_weather_data(results: list[dict]) -> pd.DataFrame:
                 )
         )
 
-        return pivot_df 
+        weather_df["weather_date"] = pd.to_datetime(weather_df["weather_date"])
+        return weather_df
 
-def save_to_parquet(df : pd.DataFrame, output_path: Path) -> None:
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        conn = duckdb.connect()
-        conn.register("weather_df", df)
-        conn.execute(f"""
-                     COPY weather_df
-                     to '{output_path}'
-                     (FORMAT PARQUET)
-                     """)
-        conn.close()
+def save_monthly_parquet(weather_df : pd.DataFrame) -> None:
+        weather_df["year"] = weather_df["weather_date"].dt.year
+        weather_df["month"] = weather_df["weather_date"].dt.month
+
+        for (year,month), month_df in weather_df.groupby(["year", "month"]):
+               output_path = (
+                      weather_bronze_dir
+                      / f"year={year}"
+                      / f"month={month:02d}"
+                      / f"daily_weather.parquet"
+               )
+               output_path.parent.mkdir(parents=True, exist_ok=True)
+               final_df = month_df.drop(columns=["year", "month"]).copy()
+               final_df["weather_date"] = final_df["weather_date"].dt.date
+               final_df.to_parquet(output_path, index=False)
 
         logging.info("Saved NOAA weather data to: %s", output_path)
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Download NOAA daily weather data")
-    parser.add_argument("--start-date", required=True, help="Start date in YYYY-MM-DD format")
-    parser.add_argument("--end-date", required=True, help="End date in YYYY-MM-DD format")
-    return parser.parse_args()
-
 def main() -> None:
-       args = parse_args()
-       results = fetch_noaa_weather(
-              start_date= args.start_date,
-              end_date=args.end_date
-       )
-       weather_df = transform_weather_data(results)
-
-       output_path = Path("data/bronze/weather/daily_weather.parquet")
-       save_to_parquet(weather_df, output_path)
+        results = fetch_noaa_weather(start_date=start_date, end_date=end_date)
+        weather_df = transform_weather_data(results)
+        save_monthly_parquet(weather_df)
 
 if __name__ == "__main__":
        main()
