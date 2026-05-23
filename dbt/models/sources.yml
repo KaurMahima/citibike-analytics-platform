@@ -11,4 +11,4 @@ sources:
     tables:
       - name: daily_weather
         config:
-          external_location: "read_parquet('../data/bronze/weather/daily_weather.parquet')"
+          external_location: "read_parquet('../data/bronze/weather/year=*/month=*/daily_weather.parquet')"
