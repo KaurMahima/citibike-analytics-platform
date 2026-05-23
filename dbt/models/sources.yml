@@ -6,3 +6,9 @@ sources:
       - name: trips
         config:
           external_location: "read_parquet('../data/bronze/year=*/month=*/trips.parquet')"
+
+  - name: weather_raw
+    tables:
+      - name: daily_weather
+        config:
+          external_location: "read_parquet('../data/bronze/weather/daily_weather.parquet')"
