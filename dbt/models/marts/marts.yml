@@ -2,13 +2,83 @@ version: 2
 
 models:
   - name: fct_trips
-    descriptione: Trip-level fact table for citi bike rides.
+    description: Trip-level fact table for citi bike rides.
     columns:
       - name: ride_id
         tests:
           - not_null
           - unique 
 
-      - name : trip_date
+      - name: trip_date
         tests:
           - not_null 
+
+  - name: fct_trip_daily
+    description: Daily aggregated trip fact table for Citi Bike rides.
+    columns:
+      - name: trip_date
+        description: Calender date of the aggregated trip metrics
+        tests:
+          - not_null
+          - unique 
+
+      - name: total_trips 
+        descriptione: Total number of trips on that date.
+        tests:
+          - not_null 
+
+      - name: member_trips
+        description: Number of member trips on that date.
+        tests:
+          - not_null 
+
+      - name: casual_trips 
+        description: Number of casual trips on that date.
+        tests: 
+          - not_null 
+
+      - name: avg_trip_duration_minutes 
+        description: Average trip duration in minutes on that date.
+        tests:
+         - not_null 
+
+  - name: fct_trip_daily_enriched 
+    description: Daily trip metrics enriched with weather, holiday and calender context.
+    columns:
+      - name: trip_date
+        description: Calendar date for the daily aggregated metrics.
+        tests:
+          - not_null
+          - unique
+
+      - name: total_trips
+        description: Total number of trips on that date.
+
+      - name: member_trips
+        description: Number of member trips on that date.
+
+      - name: casual_trips
+        description: Number of casual trips on that date.
+
+      - name: avg_trip_duration_minutes
+        description: Average trip duration in minutes for that date.
+
+      - name: is_holiday
+        description: Flag indicating whether the date is a holiday.
+
+      - name: holiday_name
+        description: Name of the holiday, if applicable.
+
+      - name: month_name
+        description: Full month name derived from trip_date.
+
+      - name: day_name
+        description: Day of week derived from trip_date.
+
+      - name: is_weekend
+        description: Flag indicating whether the date falls on a weekend.
+
+      - name: season
+        description: Season derived from the trip month.
+
+  

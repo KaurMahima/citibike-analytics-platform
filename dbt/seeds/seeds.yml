@@ -1,0 +1,14 @@
+version: 2 
+
+seeds:
+  - name : holiday_calender 
+    description: Federal holiday calender 
+    columns:
+      - name: holiday_date
+        tests:
+          - not_null
+          - unique 
+
+      - name: holiday_name
+        tests:
+          - not_null

@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: stg_weather_daily
+    description: Cleaned daily weather data for New York City from NOAA.
+    columns:
+    - name: weather_date
+      description: Calender date for the weather observation.
+      tests:
+        - not_null
+        - unique 
+
+    - name: temperature_max_c
+      description: Maximum daily temperature in Celsius.
+
+    - name: temperature_min_c
+      description: Minimum daily temperature in Celsius.
+
+    - name: precipitation_mm
+      description: Total daily precipitation in millimeters.
+
+    - name: snowfall_mm
+      description: Total daily snowfall in millimeters.
+
+    - name: avg_wind_speed_mps
+      description: Average daily wind speed in meters per second.
