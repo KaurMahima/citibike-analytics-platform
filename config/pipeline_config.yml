@@ -1,0 +1,18 @@
+date_range:
+  start_date: "2025-04-01"
+  end_date: "2026-04-30"
+
+citibike:
+  base_url: "https://s3.amazonaws.com/tripdata"
+
+noaa_weather:
+ base_url: "https://www.ncdc.noaa.gov/cdo-web/api/v2/data"
+
+weather:
+  dataset_id: "GHCND"
+  station_id: "GHCND:USW00094728"
+
+paths:
+  raw_data_dir: "data/raw"
+  bronze_data_dir: "data/bronze"
+  weather_bronze_dir: "data/bronze/weather"
