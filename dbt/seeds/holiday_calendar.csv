@@ -1,0 +1,12 @@
+holiday_date,holiday_name,is_holiday
+2024-01-01,New Year's Day,true
+2024-01-15,Martin Luther King Jr. Day,true
+2024-02-19,Presidents' Day,true
+2024-05-27,Memorial Day,true
+2024-06-19,Juneteenth,true
+2024-07-04,Independence Day,true
+2024-09-02,Labor Day,true
+2024-10-14,Columbus Day,true
+2024-11-11,Veterans Day,true
+2024-11-28,Thanksgiving Day,true
+2024-12-25,Christmas Day,true
