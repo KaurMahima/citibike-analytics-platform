@@ -3,16 +3,14 @@ import os
 from pathlib import Path
 import pandas as pd 
 import requests 
-import yaml
-
+from citibike_analytics.config import load_config
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
-with open("config/pipeline_config.yml", "r", encoding="utf-8") as file:
-       config = yaml.safe_load(file)
+config = load_config()
 
 base_url = config["noaa_weather"]["base_url"]
 start_date = config["date_range"]["start_date"]

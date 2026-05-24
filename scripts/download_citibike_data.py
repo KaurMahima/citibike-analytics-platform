@@ -5,15 +5,14 @@ from datetime import datetime
 from pathlib import Path
 import duckdb
 import requests
-import yaml 
+from citibike_analytics.config import load_config
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
-with open("config/pipeline_config.yml", "r", encoding="utf-8") as file:
-        config = yaml.safe_load(file)
+config = load_config()
 
 start_date = datetime.strptime(config["date_range"]["start_date"], "%Y-%m-%d")
 end_date = datetime.strptime(config["date_range"]["end_date"], "%Y-%m-%d")
