@@ -81,4 +81,192 @@ models:
       - name: season
         description: Season derived from the trip month.
 
+  - name: fct_station_daily 
+    description: Daily station-level Citi Bike trip counts for geospatial dashboard views.
+    columns: 
+      - name: trip_date
+        tests: 
+          - not_null
+      - name: station_id
+        tests: 
+          - not_null
+      - name: lat 
+        tests:
+          - not_null
+      - name: lon
+        tests:
+          - not_null
+      - name: trip_count
+        tests:
+          - not_null
+
+  -  name: fct_station_flows_daily
+     description: Daily origin-destination Citi Bike trip flows between stations.
+     columns:
+      - name: trip_date
+        tests:
+          - not_null
+
+      - name: start_station_id
+        tests:
+          - not_null
+
+      - name: end_station_id
+        tests:
+          - not_null
+
+      - name: trip_count
+        tests:
+          - not_null
+  - name: fct_station_hourly
+    description: Hourly station-level Citi Bike trip counts for time-of-day map analysis.
+    columns:
+      - name: trip_date
+        description: Calendar date for the hourly station aggregation.
+        tests:
+          - not_null
+
+      - name: trip_hour
+        description: Hour of day when the trip started.
+        tests:
+          - not_null
+
+      - name: hour_bucket
+        description: Time-of-day bucket for the trip hour.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - "Morning commute"
+                  - "Midday"
+                  - "Evening commute"
+                  - "Night / Early morning"
+
+      - name: is_rush_hour
+        description: Flag for morning or evening commute hours.
+        tests:
+          - not_null
+
+      - name: station_id
+        description: Start station identifier.
+        tests:
+          - not_null
+
+      - name: station_name
+        description: Start station name.
+        tests:
+          - not_null
+
+      - name: lat
+        description: Station latitude.
+        tests:
+          - not_null
+
+      - name: lon
+        description: Station longitude.
+        tests:
+          - not_null
+
+      - name: trip_count
+        description: Total trips that started at the station in that hour.
+        tests:
+          - not_null
+
+      - name: member_trips
+        description: Member trips that started at the station in that hour.
+        tests:
+          - not_null
+
+      - name: casual_trips
+        description: Casual trips that started at the station in that hour.
+        tests:
+          - not_null
+
+  - name: fct_station_flows_hourly
+    description: Hourly origin-destination Citi Bike flows for movement map analysis.
+    columns:
+      - name: trip_date
+        description: Calendar date for the hourly flow aggregation.
+        tests:
+          - not_null
+
+      - name: trip_hour
+        description: Hour of day when the trip started.
+        tests:
+          - not_null
+
+      - name: hour_bucket
+        description: Time-of-day bucket for the trip hour.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - "Morning commute"
+                  - "Midday"
+                  - "Evening commute"
+                  - "Night / Early morning"
+
+      - name: is_rush_hour
+        description: Flag for morning or evening commute hours.
+        tests:
+          - not_null
+
+      - name: start_station_id
+        description: Origin station identifier.
+        tests:
+          - not_null
+
+      - name: start_station_name
+        description: Origin station name.
+        tests:
+          - not_null
+
+      - name: end_station_id
+        description: Destination station identifier.
+        tests:
+          - not_null
+
+      - name: end_station_name
+        description: Destination station name.
+        tests:
+          - not_null
+
+      - name: start_lat
+        description: Origin station latitude.
+        tests:
+          - not_null
+
+      - name: start_lng
+        description: Origin station longitude.
+        tests:
+          - not_null
+
+      - name: end_lat
+        description: Destination station latitude.
+        tests:
+          - not_null
+
+      - name: end_lng
+        description: Destination station longitude.
+        tests:
+          - not_null
+
+      - name: trip_count
+        description: Total trips for the origin-destination pair in that hour.
+        tests:
+          - not_null
+
+      - name: member_trips
+        description: Member trips for the origin-destination pair in that hour.
+        tests:
+          - not_null
+
+      - name: casual_trips
+        description: Casual trips for the origin-destination pair in that hour.
+        tests:
+          - not_null
+
+
   
