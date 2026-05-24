@@ -3,7 +3,10 @@ import os
 from pathlib import Path
 import pandas as pd 
 import requests 
+import argparse
 from citibike_analytics.config import load_config
+from citibike_analytics.state import load_already_recorded, record_pipeline_load
+from citibike_analytics.date_utils import month_date_window
 
 logging.basicConfig(
     level=logging.INFO,
@@ -86,28 +89,59 @@ def transform_weather_data(results: list[dict]) -> pd.DataFrame:
         weather_df["weather_date"] = pd.to_datetime(weather_df["weather_date"])
         return weather_df
 
-def save_monthly_parquet(weather_df : pd.DataFrame) -> None:
-        weather_df["year"] = weather_df["weather_date"].dt.year
-        weather_df["month"] = weather_df["weather_date"].dt.month
+def save_monthly_parquet(weather_df: pd.DataFrame, year: int, month: int) -> Path:
+    output_path = (
+        weather_bronze_dir
+        / f"year={year}"
+        / f"month={month:02d}"
+        / "daily_weather.parquet"
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        for (year,month), month_df in weather_df.groupby(["year", "month"]):
-               output_path = (
-                      weather_bronze_dir
-                      / f"year={year}"
-                      / f"month={month:02d}"
-                      / f"daily_weather.parquet"
-               )
-               output_path.parent.mkdir(parents=True, exist_ok=True)
-               final_df = month_df.drop(columns=["year", "month"]).copy()
-               final_df["weather_date"] = final_df["weather_date"].dt.date
-               final_df.to_parquet(output_path, index=False)
+    final_df = weather_df.copy()
+    final_df["weather_date"] = final_df["weather_date"].dt.date
+    final_df.to_parquet(output_path, index=False)
 
-        logging.info("Saved NOAA weather data to: %s", output_path)
+    logging.info("Saved NOAA weather data to: %s", output_path)
+    return output_path
+
+def run_month(year: int, month: int, force: bool = False) -> None:
+    output_path = (
+        weather_bronze_dir
+        / f"year={year}"
+        / f"month={month:02d}"
+        / "daily_weather.parquet"
+    )
+
+    if output_path.exists() and not force:
+        logging.info("Skipping month %s-%02d because parquet already exists", year, month)
+        return
+
+    if load_already_recorded("noaa_weather", year, month) and not force:
+        logging.info("Skipping month %s-%02d because it is already recorded as loaded", year, month)
+        return
+
+    start_date, end_date = month_date_window(year, month)
+    results = fetch_noaa_weather(start_date=start_date, end_date=end_date)
+    weather_df = transform_weather_data(results)
+    saved_path = save_monthly_parquet(weather_df, year=year, month=month)
+
+    record_pipeline_load(
+        pipeline_name="noaa_weather",
+        year=year,
+        month=month,
+        output_path=saved_path.as_posix(),
+    )
+
 
 def main() -> None:
-        results = fetch_noaa_weather(start_date=start_date, end_date=end_date)
-        weather_df = transform_weather_data(results)
-        save_monthly_parquet(weather_df)
+    parser = argparse.ArgumentParser(description="Download NOAA weather data for one month")
+    parser.add_argument("--year", type=int, required=True)
+    parser.add_argument("--month", type=int, required=True)
+    parser.add_argument("--force", action="store_true")
+    args = parser.parse_args()
+
+    run_month(year=args.year, month=args.month, force=args.force)
 
 if __name__ == "__main__":
-       main()
+    main()
