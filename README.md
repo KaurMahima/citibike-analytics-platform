@@ -197,10 +197,66 @@ The dashboard is designed to support:
 - Station-to-station flow maps
 - Hourly mobility analysis using station and flow marts
 
+## Dagster Orchestration
+
+The project includes a basic Dagster pipeline to orchestrate monthly ingestion and dbt builds.
+
+Dagster currently runs these steps in order:
+
+1. Citi Bike monthly trip ingestion
+2. NOAA monthly weather ingestion
+3. `dbt build`
+
+The Dagster definitions live in `src/citibike_analytics/dagster_pipeline/definitions.py`.
+
+### Start Dagster Locally
+
+From the repository root:
+
+```bash
+conda activate citibike-analytics
+export NOAA_API_TOKEN="your_token_here"
+dagster dev -m citibike_analytics.dagster_pipeline.definitions
+```
+
+This starts the Dagster UI locally so you can launch and monitor pipeline runs.
+
+### Run The Monthly Pipeline
+
+In the Dagster UI, launch `monthly_pipeline_job`.
+
+For manual runs, provide config like:
+
+```yaml
+ops:
+	run_trip_ingestion_op:
+		config:
+			year: 2026
+			month: 5
+			force: false
+	run_weather_ingestion_op:
+		config:
+			year: 2026
+			month: 5
+			force: false
+```
+
+This is useful for reruns and backfills.
+
+### Schedule Behavior
+
+The Dagster schedule is configured to run monthly and defaults to the previous month.
+
+That means:
+
+- routine scheduled runs process the most recently completed month
+- manual runs can target specific historical months for backfills
+
 ## Important Notes
 
 - Weather ingestion requires `NOAA_API_TOKEN`.
 - The ingestion scripts expect to be run from the repository root because they read `config/pipeline_config.yml` with a relative path.
+- Dagster must be started from a terminal session where `NOAA_API_TOKEN` is exported.
 - The dashboard expects the DuckDB warehouse to already contain the dbt marts.
 - dbt materializes staging models as views and marts as tables.
 

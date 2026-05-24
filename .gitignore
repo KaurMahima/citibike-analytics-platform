@@ -229,3 +229,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Dagster local temp/home artifacts
+.tmp_dagster_home*/
+.dagster/
